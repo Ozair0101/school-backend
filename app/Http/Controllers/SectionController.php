@@ -12,9 +12,16 @@ class SectionController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $sections = Section::with('grade')->get();
+        $query = Section::with('grade');
+        
+        // Filter by grade_id if provided
+        if ($request->has('grade_id')) {
+            $query->where('grade_id', $request->grade_id);
+        }
+        
+        $sections = $query->get();
         return $this->success($sections);
     }
 
