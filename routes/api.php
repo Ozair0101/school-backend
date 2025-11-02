@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
+    AuthController,
     SchoolController,
     GradeController,
     SectionController,
@@ -33,64 +34,76 @@ use App\Http\Controllers\{
 |
 */
 
-// Schools
-Route::apiResource('schools', SchoolController::class);
+// Authentication routes (public)
+Route::post('/login', [AuthController::class, 'login']);
 
-// Grades
-Route::apiResource('grades', GradeController::class);
+// Protected authentication routes
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+});
 
-// Sections
-Route::apiResource('sections', SectionController::class);
+// Protected API routes - require authentication
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    // Schools
+    Route::apiResource('schools', SchoolController::class);
 
-// Teachers
-Route::apiResource('teachers', TeacherController::class);
+    // Grades
+    Route::apiResource('grades', GradeController::class);
 
-// Students
-Route::apiResource('students', StudentController::class);
+    // Sections
+    Route::apiResource('sections', SectionController::class);
 
-// Enrollments
-Route::apiResource('enrollments', EnrollmentController::class);
+    // Teachers
+    Route::apiResource('teachers', TeacherController::class);
 
-// Subjects
-Route::apiResource('subjects', SubjectController::class);
+    // Students
+    Route::apiResource('students', StudentController::class);
 
-// Teacher Subjects
-Route::apiResource('teacher-subjects', TeacherSubjectController::class);
+    // Enrollments
+    Route::apiResource('enrollments', EnrollmentController::class);
 
-// Monthly Exams
-Route::apiResource('monthly-exams', MonthlyExamController::class);
-Route::post('monthly-exams/{monthlyExam}/start', [MonthlyExamController::class, 'start']);
-Route::get('monthly-exams/{monthlyExam}/questions', [MonthlyExamController::class, 'questions']);
-Route::post('monthly-exams/{monthlyExam}/presign', [MonthlyExamController::class, 'presign']);
+    // Subjects
+    Route::apiResource('subjects', SubjectController::class);
 
-// Exam Subjects
-Route::apiResource('exam-subjects', ExamSubjectController::class);
+    // Teacher Subjects
+    Route::apiResource('teacher-subjects', TeacherSubjectController::class);
 
-// Question Banks
-Route::apiResource('question-banks', QuestionBankController::class);
+    // Monthly Exams
+    Route::apiResource('monthly-exams', MonthlyExamController::class);
+    Route::post('monthly-exams/{monthlyExam}/start', [MonthlyExamController::class, 'start']);
+    Route::get('monthly-exams/{monthlyExam}/questions', [MonthlyExamController::class, 'questions']);
+    Route::post('monthly-exams/{monthlyExam}/presign', [MonthlyExamController::class, 'presign']);
 
-// Questions
-Route::apiResource('questions', QuestionController::class);
+    // Exam Subjects
+    Route::apiResource('exam-subjects', ExamSubjectController::class);
 
-// Choices
-Route::apiResource('choices', ChoiceController::class);
+    // Question Banks
+    Route::apiResource('question-banks', QuestionBankController::class);
 
-// Exam Questions
-Route::apiResource('exam-questions', ExamQuestionController::class);
-Route::post('exam-questions/batch', [ExamQuestionController::class, 'batch']);
+    // Questions
+    Route::apiResource('questions', QuestionController::class);
 
-// Student Attempts
-Route::apiResource('student-attempts', StudentAttemptController::class);
-Route::post('student-attempts/{studentAttempt}/answer', [StudentAttemptController::class, 'saveAnswer']);
-Route::post('student-attempts/{studentAttempt}/submit', [StudentAttemptController::class, 'submit']);
-Route::get('student-attempts/{studentAttempt}/status', [StudentAttemptController::class, 'status']);
+    // Choices
+    Route::apiResource('choices', ChoiceController::class);
 
-// Attempt Answers
-Route::apiResource('attempt-answers', AttemptAnswerController::class);
+    // Exam Questions
+    Route::apiResource('exam-questions', ExamQuestionController::class);
+    Route::post('exam-questions/batch', [ExamQuestionController::class, 'batch']);
 
-// Proctoring Events
-Route::apiResource('proctoring-events', ProctoringEventController::class);
-Route::post('proctoring-events/batch', [ProctoringEventController::class, 'batch']);
+    // Student Attempts
+    Route::apiResource('student-attempts', StudentAttemptController::class);
+    Route::post('student-attempts/{studentAttempt}/answer', [StudentAttemptController::class, 'saveAnswer']);
+    Route::post('student-attempts/{studentAttempt}/submit', [StudentAttemptController::class, 'submit']);
+    Route::get('student-attempts/{studentAttempt}/status', [StudentAttemptController::class, 'status']);
 
-// Exam Aggregates
-Route::apiResource('exam-aggregates', ExamAggregateController::class);
+    // Attempt Answers
+    Route::apiResource('attempt-answers', AttemptAnswerController::class);
+
+    // Proctoring Events
+    Route::apiResource('proctoring-events', ProctoringEventController::class);
+    Route::post('proctoring-events/batch', [ProctoringEventController::class, 'batch']);
+
+    // Exam Aggregates
+    Route::apiResource('exam-aggregates', ExamAggregateController::class);
+});
