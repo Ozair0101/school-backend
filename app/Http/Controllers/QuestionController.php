@@ -11,9 +11,21 @@ class QuestionController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $questions = Question::with(['bank', 'author'])->get();
+        $query = Question::with(['bank', 'author', 'choices']);
+        
+        // Filter by bank_id if provided
+        if ($request->has('bank_id')) {
+            $query->where('bank_id', $request->bank_id);
+        }
+        
+        // Filter by type if provided
+        if ($request->has('type')) {
+            $query->where('type', $request->type);
+        }
+        
+        $questions = $query->get();
         return $this->success($questions);
     }
 
