@@ -38,8 +38,6 @@ class ExamSystemSeeder extends Seeder
         $school = School::factory()->create([
             'name' => 'Greenwood High School',
             'address' => '123 Education Street, Learning City',
-            'phone' => '+1-555-0123',
-            'email' => 'info@greenwoodhigh.edu',
         ]);
 
         // Create grades
@@ -51,14 +49,12 @@ class ExamSystemSeeder extends Seeder
         $sections = collect();
         foreach ($grades as $grade) {
             $sectionA = Section::factory()->create([
-                'school_id' => $school->id,
                 'grade_id' => $grade->id,
                 'name' => 'Section A',
             ]);
             $sections->push($sectionA);
 
             $sectionB = Section::factory()->create([
-                'school_id' => $school->id,
                 'grade_id' => $grade->id,
                 'name' => 'Section B',
             ]);
@@ -87,6 +83,7 @@ class ExamSystemSeeder extends Seeder
         }
 
         // Create enrollments (students to grades/sections)
+        $rollNoCounter = 1;
         foreach ($students as $student) {
             // Randomly assign to a grade and section
             $grade = $grades->random();
@@ -98,14 +95,21 @@ class ExamSystemSeeder extends Seeder
                     'student_id' => $student->id,
                     'grade_id' => $grade->id,
                     'section_id' => $section->id,
+                    'academic_year' => '2025-2026',
+                    'roll_no' => (string) $rollNoCounter++,
                 ]);
             }
         }
 
         // Create question banks
-        $questionBanks = QuestionBank::factory()->count(5)->create([
-            'school_id' => $school->id,
-        ]);
+        $questionBanks = [];
+        $teacherIds = $teachers->pluck('id')->toArray();
+        for ($i = 0; $i < 5; $i++) {
+            $questionBanks[] = QuestionBank::factory()->create([
+                'school_id' => $school->id,
+                'created_by' => $teacherIds[array_rand($teacherIds)],
+            ]);
+        }
 
         // Create questions for each bank
         $questions = [];
@@ -176,9 +180,12 @@ class ExamSystemSeeder extends Seeder
 
                     // Link subjects to this exam
                     foreach ($subjects as $subject) {
+                        $maxMarks = $subject->default_max_marks;
                         ExamSubject::factory()->create([
                             'monthly_exam_id' => $exam->id,
                             'subject_id' => $subject->id,
+                            'max_marks' => $maxMarks,
+                            'pass_marks' => (int) $subject->pass_marks,
                         ]);
                     }
 

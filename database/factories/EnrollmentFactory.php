@@ -20,6 +20,8 @@ class EnrollmentFactory extends Factory
             'student_id' => 1,
             'grade_id' => 1,
             'section_id' => 1,
+            'academic_year' => '2025-2026',
+            'roll_no' => fake()->unique()->numberBetween(1, 100),
         ];
     }
 }

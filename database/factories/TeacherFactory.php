@@ -19,12 +19,9 @@ class TeacherFactory extends Factory
     {
         return [
             'school_id' => 1,
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
+            'full_name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'phone' => fake()->phoneNumber(),
-            'qualification' => fake()->randomElement(['B.Ed', 'M.Ed', 'PhD']),
-            'department' => fake()->randomElement(['Mathematics', 'Science', 'English', 'History', 'Geography']),
         ];
     }
 }

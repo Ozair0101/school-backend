@@ -25,7 +25,7 @@ class QuestionBankFactory extends Factory
                 'History Question Bank',
                 'Geography Question Bank'
             ]),
-            'description' => fake()->sentence(),
+            'created_by' => 1,
         ];
     }
 }

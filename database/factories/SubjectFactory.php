@@ -24,7 +24,8 @@ class SubjectFactory extends Factory
                 'Computer Science', 'Art', 'Music', 'Physical Education'
             ]),
             'code' => fake()->lexify('???###'),
-            'description' => fake()->sentence(),
+            'default_max_marks' => fake()->randomElement([50, 100, 150]),
+            'pass_marks' => fake()->randomElement([25, 40, 50, 60, 75]),
         ];
     }
 }
