@@ -13,8 +13,13 @@ class MonthlyExamController extends ApiController
      */
     public function index(): JsonResponse
     {
-        $monthlyExams = MonthlyExam::with(['school', 'grade', 'section'])->get();
-        return $this->success($monthlyExams);
+        try {
+            $monthlyExams = MonthlyExam::with(['school', 'grade', 'section'])->get();
+            return $this->success($monthlyExams);
+        } catch (\Exception $e) {
+            \Log::error('Failed to fetch monthly exams: ' . $e->getMessage());
+            return $this->error('Failed to fetch exams. Please ensure the database is running.', 500);
+        }
     }
 
     /**
