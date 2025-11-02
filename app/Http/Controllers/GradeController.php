@@ -12,9 +12,16 @@ class GradeController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $grades = Grade::with('school')->get();
+        $query = Grade::with('school');
+        
+        // Filter by school_id if provided
+        if ($request->has('school_id')) {
+            $query->where('school_id', $request->school_id);
+        }
+        
+        $grades = $query->get();
         return $this->success($grades);
     }
 
