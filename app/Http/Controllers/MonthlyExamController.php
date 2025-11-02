@@ -14,11 +14,43 @@ class MonthlyExamController extends ApiController
     public function index(): JsonResponse
     {
         try {
-            $monthlyExams = MonthlyExam::with(['school', 'grade', 'section'])->get();
+            // Test database connection first
+            \DB::connection()->getPdo();
+            
+            // Optimize query - only select needed fields and limit relationships
+            $monthlyExams = MonthlyExam::with([
+                'school:id,name',
+                'grade:id,name,level',
+                'section:id,name'
+            ])
+            ->select([
+                'id',
+                'school_id',
+                'grade_id',
+                'section_id',
+                'month',
+                'year',
+                'exam_date',
+                'description',
+                'online_enabled',
+                'start_time',
+                'end_time',
+                'duration_minutes',
+                'access_code',
+                'passing_percentage',
+                'created_at',
+                'updated_at'
+            ])
+            ->orderBy('exam_date', 'desc')
+            ->get();
+            
             return $this->success($monthlyExams);
+        } catch (\PDOException $e) {
+            \Log::error('Database connection failed: ' . $e->getMessage());
+            return $this->error('Database connection failed. Please check your database configuration and ensure MySQL is running.', 503);
         } catch (\Exception $e) {
             \Log::error('Failed to fetch monthly exams: ' . $e->getMessage());
-            return $this->error('Failed to fetch exams. Please ensure the database is running.', 500);
+            return $this->error('Failed to fetch exams: ' . $e->getMessage(), 500);
         }
     }
 
@@ -133,5 +165,19 @@ class MonthlyExamController extends ApiController
         $monthlyExam->delete();
 
         return $this->success(null, 'Monthly exam deleted successfully');
+    }
+
+    /**
+     * Get questions for a monthly exam.
+     */
+    public function questions(MonthlyExam $monthlyExam): JsonResponse
+    {
+        $examQuestions = $monthlyExam->examQuestions()
+            ->with(['question.choices'])
+            ->orderBy('sequence')
+            ->orderBy('id')
+            ->get();
+        
+        return $this->success($examQuestions);
     }
 }
