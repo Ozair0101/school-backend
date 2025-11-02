@@ -11,10 +11,42 @@ class ExamQuestionController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $examQuestions = ExamQuestion::with(['monthlyExam', 'question'])->get();
+        $query = ExamQuestion::with(['monthlyExam', 'question.choices']);
+        
+        // Filter by monthly_exam_id if provided
+        if ($request->has('monthly_exam_id')) {
+            $query->where('monthly_exam_id', $request->monthly_exam_id);
+        }
+        
+        $examQuestions = $query->orderBy('sequence')->orderBy('id')->get();
         return $this->success($examQuestions);
+    }
+
+    /**
+     * Store multiple exam questions at once (batch)
+     */
+    public function batch(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'monthly_exam_id' => 'required|exists:monthly_exams,id',
+            'questions' => 'required|array|min:1',
+            'questions.*.question_id' => 'required|exists:questions,id',
+            'questions.*.marks' => 'nullable|numeric|min:0',
+            'questions.*.sequence' => 'nullable|integer',
+            'questions.*.pool_tag' => 'nullable|string|max:255',
+        ]);
+
+        $examQuestions = [];
+        foreach ($validated['questions'] as $questionData) {
+            $examQuestions[] = ExamQuestion::create([
+                'monthly_exam_id' => $validated['monthly_exam_id'],
+                ...$questionData,
+            ]);
+        }
+
+        return $this->success($examQuestions, 'Exam questions created successfully', 201);
     }
 
     /**
