@@ -59,6 +59,9 @@ Route::apiResource('teacher-subjects', TeacherSubjectController::class);
 
 // Monthly Exams
 Route::apiResource('monthly-exams', MonthlyExamController::class);
+Route::post('monthly-exams/{monthlyExam}/start', [MonthlyExamController::class, 'start']);
+Route::get('monthly-exams/{monthlyExam}/questions', [MonthlyExamController::class, 'questions']);
+Route::post('monthly-exams/{monthlyExam}/presign', [MonthlyExamController::class, 'presign']);
 
 // Exam Subjects
 Route::apiResource('exam-subjects', ExamSubjectController::class);
@@ -74,15 +77,20 @@ Route::apiResource('choices', ChoiceController::class);
 
 // Exam Questions
 Route::apiResource('exam-questions', ExamQuestionController::class);
+Route::post('exam-questions/batch', [ExamQuestionController::class, 'batch']);
 
 // Student Attempts
 Route::apiResource('student-attempts', StudentAttemptController::class);
+Route::post('student-attempts/{studentAttempt}/answer', [StudentAttemptController::class, 'saveAnswer']);
+Route::post('student-attempts/{studentAttempt}/submit', [StudentAttemptController::class, 'submit']);
+Route::get('student-attempts/{studentAttempt}/status', [StudentAttemptController::class, 'status']);
 
 // Attempt Answers
 Route::apiResource('attempt-answers', AttemptAnswerController::class);
 
 // Proctoring Events
 Route::apiResource('proctoring-events', ProctoringEventController::class);
+Route::post('proctoring-events/batch', [ProctoringEventController::class, 'batch']);
 
 // Exam Aggregates
 Route::apiResource('exam-aggregates', ExamAggregateController::class);
