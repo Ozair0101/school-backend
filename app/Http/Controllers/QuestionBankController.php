@@ -11,9 +11,18 @@ class QuestionBankController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $questionBanks = QuestionBank::with(['school', 'creator'])->get();
+        $query = QuestionBank::with(['school', 'creator']);
+        
+        // Filter by school_id if provided
+        if ($request->has('school_id')) {
+            $query->where('school_id', $request->school_id);
+        }
+        
+        // Add question count
+        $questionBanks = $query->withCount('questions')->get();
+        
         return $this->success($questionBanks);
     }
 
@@ -39,6 +48,7 @@ class QuestionBankController extends ApiController
     public function show(QuestionBank $questionBank): JsonResponse
     {
         $questionBank->load(['school', 'creator']);
+        $questionBank->loadCount('questions');
         return $this->success($questionBank);
     }
 
