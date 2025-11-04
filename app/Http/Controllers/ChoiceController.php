@@ -11,9 +11,16 @@ class ChoiceController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $choices = Choice::with('question')->get();
+        $query = Choice::with('question');
+        
+        // Filter by question_id if provided
+        if ($request->has('question_id')) {
+            $query->where('question_id', $request->question_id);
+        }
+        
+        $choices = $query->orderBy('position')->orderBy('id')->get();
         return $this->success($choices);
     }
 
