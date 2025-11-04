@@ -73,4 +73,17 @@ class AttemptAnswer extends Model
     {
         return $this->belongsTo(Teacher::class, 'graded_by');
     }
+
+    /**
+     * Append the graded_by_teacher relationship to the model's array form.
+     */
+    protected $appends = [];
+
+    /**
+     * Get the accessor for graded_by_teacher.
+     */
+    public function getGradedByTeacherAttribute()
+    {
+        return $this->gradedBy;
+    }
 }
