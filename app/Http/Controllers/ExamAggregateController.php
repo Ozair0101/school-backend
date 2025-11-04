@@ -11,9 +11,32 @@ class ExamAggregateController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $examAggregates = ExamAggregate::with(['monthlyExam', 'student'])->get();
+        $query = ExamAggregate::with(['monthlyExam', 'student']);
+        
+        // Filter by monthly_exam_id if provided
+        if ($request->has('monthly_exam_id')) {
+            $query->where('monthly_exam_id', $request->monthly_exam_id);
+        }
+        
+        // Filter by student_id if provided
+        if ($request->has('student_id')) {
+            $query->where('student_id', $request->student_id);
+        }
+        
+        // Filter by published status
+        if ($request->has('published')) {
+            $published = filter_var($request->published, FILTER_VALIDATE_BOOLEAN);
+            $query->where('published', $published);
+        }
+        
+        // Order by rank if available, otherwise by total_marks descending
+        $examAggregates = $query->orderByRaw('rank IS NULL, rank ASC')
+            ->orderBy('total_marks', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
         return $this->success($examAggregates);
     }
 
@@ -28,7 +51,7 @@ class ExamAggregateController extends ApiController
             'total_marks' => 'nullable|numeric|min:0',
             'percent' => 'nullable|numeric|min:0|max:100',
             'rank' => 'nullable|integer|min:1',
-            'published' => 'boolean',
+            'published' => 'nullable|boolean',
             'published_at' => 'nullable|date',
         ]);
 
@@ -38,10 +61,22 @@ class ExamAggregateController extends ApiController
             ->first();
 
         if ($existing) {
-            return $this->error('An aggregate already exists for this exam and student', 409);
+            // Update existing instead of creating new (upsert behavior)
+            $existing->update($validated);
+            $existing->load(['monthlyExam', 'student']);
+            return $this->success($existing, 'Exam aggregate updated successfully');
+        }
+
+        // Set defaults
+        if (!isset($validated['published'])) {
+            $validated['published'] = false;
+        }
+        if (isset($validated['published']) && $validated['published'] && !isset($validated['published_at'])) {
+            $validated['published_at'] = now();
         }
 
         $examAggregate = ExamAggregate::create($validated);
+        $examAggregate->load(['monthlyExam', 'student']);
 
         return $this->success($examAggregate, 'Exam aggregate created successfully', 201);
     }
@@ -66,7 +101,7 @@ class ExamAggregateController extends ApiController
             'total_marks' => 'nullable|numeric|min:0',
             'percent' => 'nullable|numeric|min:0|max:100',
             'rank' => 'nullable|integer|min:1',
-            'published' => 'boolean',
+            'published' => 'nullable|boolean',
             'published_at' => 'nullable|date',
         ]);
 
@@ -82,7 +117,15 @@ class ExamAggregateController extends ApiController
             }
         }
 
+        // Set published_at if being published and not already set
+        if (isset($validated['published']) && $validated['published'] && !$examAggregate->published) {
+            if (!isset($validated['published_at'])) {
+                $validated['published_at'] = now();
+            }
+        }
+
         $examAggregate->update($validated);
+        $examAggregate->load(['monthlyExam', 'student']);
 
         return $this->success($examAggregate, 'Exam aggregate updated successfully');
     }
