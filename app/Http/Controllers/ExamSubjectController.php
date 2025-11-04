@@ -11,9 +11,16 @@ class ExamSubjectController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $examSubjects = ExamSubject::with(['monthlyExam', 'subject'])->get();
+        $query = ExamSubject::with(['monthlyExam', 'subject']);
+        
+        // Filter by monthly_exam_id if provided
+        if ($request->has('monthly_exam_id')) {
+            $query->where('monthly_exam_id', $request->monthly_exam_id);
+        }
+        
+        $examSubjects = $query->get();
         return $this->success($examSubjects);
     }
 
@@ -29,6 +36,11 @@ class ExamSubjectController extends ApiController
             'pass_marks' => 'required|integer|min:0',
         ]);
 
+        // Validate that pass_marks does not exceed max_marks
+        if ($validated['pass_marks'] > $validated['max_marks']) {
+            return $this->error('Pass marks cannot exceed max marks', 422);
+        }
+
         // Check if this combination already exists
         $existing = ExamSubject::where('monthly_exam_id', $validated['monthly_exam_id'])
             ->where('subject_id', $validated['subject_id'])
@@ -39,6 +51,7 @@ class ExamSubjectController extends ApiController
         }
 
         $examSubject = ExamSubject::create($validated);
+        $examSubject->load(['monthlyExam', 'subject']);
 
         return $this->success($examSubject, 'Exam subject created successfully', 201);
     }
@@ -64,6 +77,17 @@ class ExamSubjectController extends ApiController
             'pass_marks' => 'sometimes|required|integer|min:0',
         ]);
 
+        // Merge with existing values to get complete state for validation
+        $mergedData = array_merge($examSubject->toArray(), $validated);
+        
+        // Validate that pass_marks does not exceed max_marks
+        $maxMarks = $mergedData['max_marks'] ?? $examSubject->max_marks;
+        $passMarks = $mergedData['pass_marks'] ?? $examSubject->pass_marks;
+        
+        if ($passMarks > $maxMarks) {
+            return $this->error('Pass marks cannot exceed max marks', 422);
+        }
+
         // Check if this combination already exists (excluding current)
         if (isset($validated['monthly_exam_id']) && isset($validated['subject_id'])) {
             $existing = ExamSubject::where('monthly_exam_id', $validated['monthly_exam_id'])
@@ -77,6 +101,7 @@ class ExamSubjectController extends ApiController
         }
 
         $examSubject->update($validated);
+        $examSubject->load(['monthlyExam', 'subject']);
 
         return $this->success($examSubject, 'Exam subject updated successfully');
     }
