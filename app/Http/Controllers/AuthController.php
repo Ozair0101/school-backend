@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use App\Models\User;
 
@@ -31,10 +32,15 @@ class AuthController extends Controller
         // Try to authenticate
         $credentials = $request->only('email', 'password');
         
-        // Check if user exists with email or username
-        $user = User::where('email', $credentials['email'])
-            ->orWhere('username', $credentials['email'])
-            ->first();
+        // Check if user exists with email or username (if username column exists)
+        $query = User::where('email', $credentials['email']);
+        
+        // Only check username if the column exists in the database
+        if (Schema::hasColumn('users', 'username')) {
+            $query->orWhere('username', $credentials['email']);
+        }
+        
+        $user = $query->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([

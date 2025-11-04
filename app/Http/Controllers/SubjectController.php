@@ -11,9 +11,16 @@ class SubjectController extends ApiController
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $subjects = Subject::with('school')->get();
+        $query = Subject::with('school');
+        
+        // Filter by school_id if provided
+        if ($request->has('school_id')) {
+            $query->where('school_id', $request->school_id);
+        }
+        
+        $subjects = $query->get();
         return $this->success($subjects);
     }
 
